@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <link rel="stylesheet" href="css/style.css" />
+        <script src="https://www.gstatic.com/firebasejs/5.9.4/firebase.js"></script>
+</head>
+
+<body class="h-100">
+        
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                Medical Appointment org
+            </a>
+
+            <div class="dropdown navbar-right">
+                <button 
+                    id="logout"
+                    class="btn btn-secondary dropdown-toggle"
+                    type="button"
+                    data-toggle="dropdown"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                >
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="users">Select Users</label>
+                    <select class="form-control" size="10" id="users" multiple>
+                                
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="form-group">
+                    <label for="title">Notification title</label>
+                    <input type="text" class="form-control" id="title" placeholder="notification title" />
+                </div>
+                <div class="form-group">
+                    <label for="body">Notification Body</label>
+                    <input type="text" class="form-control" id="body" placeholder="notification body" />
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" id="btn-send">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+  
+
+    <script src="js/app.js"></script>
+    
+    <script>
+    
+        var db = firebase.database().ref("Patients");
+        db.once("value").then(function(snapshot){
+            
+            $("#users").empty(); 
+            if(snapshot.exists()){
+                snapshot.forEach(function(userSnapshot){
+                    var html = "<option value='";
+                    html += userSnapshot.val().Device_Token;
+                    html += "'>";
+                    html += userSnapshot.val().Email; 
+                    html += "</option>";
+                    $("#users").append(html);
+                });
+            }
+        });
+        $("#btn-send").click(function(){
+            var to = $("#users").val();
+            var title = $("#title").val();
+            var body = $("#body").val(); 
+            $.ajax({
+                type: 'POST',
+                url: 'https://fcm.googleapis.com/fcm/send', 
+                headers:{
+                    Authorization: 'key=AIzaSyBGXcC3D6FMR8l2Ok84SrEfHdM8A_kMJ-Q'
+                },
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify({
+                    "registration_ids":to,
+                    "notification":{
+                        "title": title,
+                        "body": body
+                    }
+                }),
+                success: function(response){
+                    alert("Sent to "+response.success + " Devices");
+                },
+                error: function(error){
+                    alert("Some error occurred");
+                }
+            });
+        });
+    </script>
+
+    <script>
+        firebase.auth().onAuthStateChanged(function(user){
+            if(!user){
+                window.location.href = "index.html";
+            }
+        });
+        $("#logout").click(function(){
+            firebase.auth().signOut();
+        });
+    </script>
+</body>
+</html>
